@@ -4,20 +4,45 @@ import { ProductService } from '@/service/ProductService';
 import { onMounted, ref, watch } from 'vue';
 
 const { getPrimary, getSurface, isDarkTheme } = useLayout();
-
+const lineData = ref(null);
+const lineOptions = ref(null);
 const products = ref(null);
 const chartData = ref(null);
 const chartOptions = ref(null);
+
+
+
+const pieData = ref(null);
+const polarData = ref(null);
+const barData = ref(null);
+const radarData = ref(null);
+const pieOptions = ref(null);
+const polarOptions = ref(null);
+const barOptions = ref(null);
+const radarOptions = ref(null);
 
 const items = ref([
     { label: 'Add New', icon: 'pi pi-fw pi-plus' },
     { label: 'Remove', icon: 'pi pi-fw pi-trash' }
 ]);
 
+const lineChartData = ref();
+const lineChartOptions = ref();
+const menu = ref();
+const menuItems = ref([
+    { label: 'Add New', icon: 'pi pi-fw pi-plus' },
+    { label: 'Remove', icon: 'pi pi-fw pi-minus' }
+]);
+
 onMounted(() => {
     ProductService.getProductsSmall().then((data) => (products.value = data));
     chartData.value = setChartData();
     chartOptions.value = setChartOptions();
+    initLineChart();
+});
+
+onMounted(() => {
+    setColorOptions();
 });
 
 function setChartData() {
@@ -91,13 +116,270 @@ function setChartOptions() {
 }
 
 const formatCurrency = (value) => {
-    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    return value.toLocaleString('en-US', { style: 'currency', currency: 'MYR' });
 };
+
+function setColorOptions() {
+    const documentStyle = getComputedStyle(document.documentElement);
+    const textColor = documentStyle.getPropertyValue('--text-color');
+    const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
+    const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+
+    barData.value = {
+        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+        datasets: [
+            {
+                label: 'My First dataset',
+                backgroundColor: documentStyle.getPropertyValue('--p-primary-500'),
+                borderColor: documentStyle.getPropertyValue('--p-primary-500'),
+                data: [65, 59, 80, 81, 56, 55, 40]
+            },
+            {
+                label: 'My Second dataset',
+                backgroundColor: documentStyle.getPropertyValue('--p-primary-200'),
+                borderColor: documentStyle.getPropertyValue('--p-primary-200'),
+                data: [28, 48, 40, 19, 86, 27, 90]
+            }
+        ]
+    };
+    barOptions.value = {
+        plugins: {
+            legend: {
+                labels: {
+                    fontColor: textColor
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: textColorSecondary,
+                    font: {
+                        weight: 500
+                    }
+                },
+                grid: {
+                    display: false,
+                    drawBorder: false
+                }
+            },
+            y: {
+                ticks: {
+                    color: textColorSecondary
+                },
+                grid: {
+                    color: surfaceBorder,
+                    drawBorder: false
+                }
+            }
+        }
+    };
+
+    pieData.value = {
+        labels: ['A', 'B', 'C'],
+        datasets: [
+            {
+                data: [540, 325, 702],
+                backgroundColor: [documentStyle.getPropertyValue('--p-indigo-500'), documentStyle.getPropertyValue('--p-purple-500'), documentStyle.getPropertyValue('--p-teal-500')],
+                hoverBackgroundColor: [documentStyle.getPropertyValue('--p-indigo-400'), documentStyle.getPropertyValue('--p-purple-400'), documentStyle.getPropertyValue('--p-teal-400')]
+            }
+        ]
+    };
+
+    pieOptions.value = {
+        plugins: {
+            legend: {
+                labels: {
+                    usePointStyle: true,
+                    color: textColor
+                }
+            }
+        }
+    };
+
+    lineData.value = {
+        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+        datasets: [
+            {
+                label: 'First Dataset',
+                data: [65, 59, 80, 81, 56, 55, 40],
+                fill: false,
+                backgroundColor: documentStyle.getPropertyValue('--p-primary-500'),
+                borderColor: documentStyle.getPropertyValue('--p-primary-500'),
+                tension: 0.4
+            },
+            {
+                label: 'Second Dataset',
+                data: [28, 48, 40, 19, 86, 27, 90],
+                fill: false,
+                backgroundColor: documentStyle.getPropertyValue('--p-primary-200'),
+                borderColor: documentStyle.getPropertyValue('--p-primary-200'),
+                tension: 0.4
+            }
+        ]
+    };
+
+    lineOptions.value = {
+        plugins: {
+            legend: {
+                labels: {
+                    fontColor: textColor
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: textColorSecondary
+                },
+                grid: {
+                    color: surfaceBorder,
+                    drawBorder: false
+                }
+            },
+            y: {
+                ticks: {
+                    color: textColorSecondary
+                },
+                grid: {
+                    color: surfaceBorder,
+                    drawBorder: false
+                }
+            }
+        }
+    };
+
+    polarData.value = {
+        datasets: [
+            {
+                data: [11, 16, 7, 3],
+                backgroundColor: [documentStyle.getPropertyValue('--p-indigo-500'), documentStyle.getPropertyValue('--p-purple-500'), documentStyle.getPropertyValue('--p-teal-500'), documentStyle.getPropertyValue('--p-orange-500')],
+                label: 'My dataset'
+            }
+        ],
+        labels: ['Indigo', 'Purple', 'Teal', 'Orange']
+    };
+
+    polarOptions.value = {
+        plugins: {
+            legend: {
+                labels: {
+                    color: textColor
+                }
+            }
+        },
+        scales: {
+            r: {
+                grid: {
+                    color: surfaceBorder
+                }
+            }
+        }
+    };
+
+    radarData.value = {
+        labels: ['Eating', 'Drinking', 'Sleeping', 'Designing', 'Coding', 'Cycling', 'Running'],
+        datasets: [
+            {
+                label: 'My First dataset',
+                borderColor: documentStyle.getPropertyValue('--p-indigo-400'),
+                pointBackgroundColor: documentStyle.getPropertyValue('--p-indigo-400'),
+                pointBorderColor: documentStyle.getPropertyValue('--p-indigo-400'),
+                pointHoverBackgroundColor: textColor,
+                pointHoverBorderColor: documentStyle.getPropertyValue('--p-indigo-400'),
+                data: [65, 59, 90, 81, 56, 55, 40]
+            },
+            {
+                label: 'My Second dataset',
+                borderColor: documentStyle.getPropertyValue('--p-purple-400'),
+                pointBackgroundColor: documentStyle.getPropertyValue('--p-purple-400'),
+                pointBorderColor: documentStyle.getPropertyValue('--p-purple-400'),
+                pointHoverBackgroundColor: textColor,
+                pointHoverBorderColor: documentStyle.getPropertyValue('--p-purple-400'),
+                data: [28, 48, 40, 19, 96, 27, 100]
+            }
+        ]
+    };
+
+    radarOptions.value = {
+        plugins: {
+            legend: {
+                labels: {
+                    fontColor: textColor
+                }
+            }
+        },
+        scales: {
+            r: {
+                grid: {
+                    color: textColorSecondary
+                }
+            }
+        }
+    };
+}
 
 watch([getPrimary, getSurface, isDarkTheme], () => {
     chartData.value = setChartData();
     chartOptions.value = setChartOptions();
 });
+
+const initLineChart = () => {
+    const documentStyle = getComputedStyle(document.documentElement);
+    const textColor = documentStyle.getPropertyValue('--text-color');
+    const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
+    const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+    
+    lineChartData.value = {
+        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+        datasets: [
+            {
+                label: 'First Dataset',
+                data: [65, 59, 80, 81, 56, 55, 40],
+                fill: false,
+                tension: 0.4,
+                borderColor: documentStyle.getPropertyValue('--blue-500')
+            },
+            {
+                label: 'Second Dataset',
+                data: [28, 48, 40, 19, 86, 27, 90],
+                fill: false,
+                tension: 0.4,
+                borderColor: documentStyle.getPropertyValue('--pink-500')
+            }
+        ]
+    };
+    
+    lineChartOptions.value = {
+        maintainAspectRatio: false,
+        aspectRatio: 0.6,
+        plugins: {
+            legend: {
+                labels: {
+                    color: textColor
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: textColorSecondary
+                },
+                grid: {
+                    color: surfaceBorder
+                }
+            },
+            y: {
+                ticks: {
+                    color: textColorSecondary
+                },
+                grid: {
+                    color: surfaceBorder
+                }
+            }
+        }
+    };
+};
 </script>
 
 <template>
@@ -186,87 +468,12 @@ watch([getPrimary, getSurface, isDarkTheme], () => {
                 </DataTable>
             </div>
             <div class="card">
-                <div class="flex justify-between items-center mb-6">
-                    <div class="font-semibold text-xl">Best Selling Products</div>
-                    <div>
-                        <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu2.toggle($event)"></Button>
-                        <Menu ref="menu2" :popup="true" :model="items" class="!min-w-40"></Menu>
+                <div class="col-span-12 xl:col-span-6">
+                    <div class="card">
+                        <div class="font-semibold text-xl mb-4">Bar</div>
+                        <Chart type="bar" :data="barData" :options="barOptions"></Chart>
                     </div>
                 </div>
-                <ul class="list-none p-0 m-0">
-                    <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                        <div>
-                            <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Space T-Shirt</span>
-                            <div class="mt-1 text-muted-color">Clothing</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 flex items-center">
-                            <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                                <div class="bg-orange-500 h-full" style="width: 50%"></div>
-                            </div>
-                            <span class="text-orange-500 ml-4 font-medium">%50</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                        <div>
-                            <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Portal Sticker</span>
-                            <div class="mt-1 text-muted-color">Accessories</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-20 flex items-center">
-                            <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                                <div class="bg-cyan-500 h-full" style="width: 16%"></div>
-                            </div>
-                            <span class="text-cyan-500 ml-4 font-medium">%16</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                        <div>
-                            <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Supernova Sticker</span>
-                            <div class="mt-1 text-muted-color">Accessories</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-20 flex items-center">
-                            <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                                <div class="bg-pink-500 h-full" style="width: 67%"></div>
-                            </div>
-                            <span class="text-pink-500 ml-4 font-medium">%67</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                        <div>
-                            <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Wonders Notebook</span>
-                            <div class="mt-1 text-muted-color">Office</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-20 flex items-center">
-                            <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                                <div class="bg-green-500 h-full" style="width: 35%"></div>
-                            </div>
-                            <span class="text-primary ml-4 font-medium">%35</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                        <div>
-                            <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Mat Black Case</span>
-                            <div class="mt-1 text-muted-color">Accessories</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-20 flex items-center">
-                            <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                                <div class="bg-purple-500 h-full" style="width: 75%"></div>
-                            </div>
-                            <span class="text-purple-500 ml-4 font-medium">%75</span>
-                        </div>
-                    </li>
-                    <li class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                        <div>
-                            <span class="text-surface-900 dark:text-surface-0 font-medium mr-2 mb-1 md:mb-0">Robots T-Shirt</span>
-                            <div class="mt-1 text-muted-color">Clothing</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 ml-0 md:ml-20 flex items-center">
-                            <div class="bg-surface-300 dark:bg-surface-500 rounded-border overflow-hidden w-40 lg:w-24" style="height: 8px">
-                                <div class="bg-teal-500 h-full" style="width: 40%"></div>
-                            </div>
-                            <span class="text-teal-500 ml-4 font-medium">%40</span>
-                        </div>
-                    </li>
-                </ul>
             </div>
         </div>
         <div class="col-span-12 xl:col-span-6">
@@ -275,69 +482,8 @@ watch([getPrimary, getSurface, isDarkTheme], () => {
                 <Chart type="bar" :data="chartData" :options="chartOptions" class="h-80" />
             </div>
             <div class="card">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="font-semibold text-xl">Notifications</div>
-                    <div>
-                        <Button icon="pi pi-ellipsis-v" class="p-button-text p-button-plain p-button-rounded" @click="$refs.menu1.toggle($event)"></Button>
-                        <Menu ref="menu1" :popup="true" :model="items" class="!min-w-40"></Menu>
-                    </div>
-                </div>
-
-                <span class="block text-muted-color font-medium mb-4">TODAY</span>
-                <ul class="p-0 mx-0 mt-0 mb-6 list-none">
-                    <li class="flex items-center py-2 border-b border-surface">
-                        <div class="w-12 h-12 flex items-center justify-center bg-blue-100 dark:bg-blue-400/10 rounded-full mr-4 shrink-0">
-                            <i class="pi pi-dollar !text-xl text-blue-500"></i>
-                        </div>
-                        <span class="text-surface-900 dark:text-surface-0 leading-normal"
-                            >Richard Jones
-                            <span class="text-surface-700 dark:text-surface-100">has purchased a blue t-shirt for <span class="text-primary font-bold">$79.00</span></span>
-                        </span>
-                    </li>
-                    <li class="flex items-center py-2">
-                        <div class="w-12 h-12 flex items-center justify-center bg-orange-100 dark:bg-orange-400/10 rounded-full mr-4 shrink-0">
-                            <i class="pi pi-download !text-xl text-orange-500"></i>
-                        </div>
-                        <span class="text-surface-700 dark:text-surface-100 leading-normal">Your request for withdrawal of <span class="text-primary font-bold">$2500.00</span> has been initiated.</span>
-                    </li>
-                </ul>
-
-                <span class="block text-muted-color font-medium mb-4">YESTERDAY</span>
-                <ul class="p-0 m-0 list-none mb-6">
-                    <li class="flex items-center py-2 border-b border-surface">
-                        <div class="w-12 h-12 flex items-center justify-center bg-blue-100 dark:bg-blue-400/10 rounded-full mr-4 shrink-0">
-                            <i class="pi pi-dollar !text-xl text-blue-500"></i>
-                        </div>
-                        <span class="text-surface-900 dark:text-surface-0 leading-normal"
-                            >Keyser Wick
-                            <span class="text-surface-700 dark:text-surface-100">has purchased a black jacket for <span class="text-primary font-bold">$59.00</span></span>
-                        </span>
-                    </li>
-                    <li class="flex items-center py-2 border-b border-surface">
-                        <div class="w-12 h-12 flex items-center justify-center bg-pink-100 dark:bg-pink-400/10 rounded-full mr-4 shrink-0">
-                            <i class="pi pi-question !text-xl text-pink-500"></i>
-                        </div>
-                        <span class="text-surface-900 dark:text-surface-0 leading-normal"
-                            >Jane Davis
-                            <span class="text-surface-700 dark:text-surface-100">has posted a new questions about your product.</span>
-                        </span>
-                    </li>
-                </ul>
-                <span class="block text-muted-color font-medium mb-4">LAST WEEK</span>
-                <ul class="p-0 m-0 list-none">
-                    <li class="flex items-center py-2 border-b border-surface">
-                        <div class="w-12 h-12 flex items-center justify-center bg-green-100 dark:bg-green-400/10 rounded-full mr-4 shrink-0">
-                            <i class="pi pi-arrow-up !text-xl text-green-500"></i>
-                        </div>
-                        <span class="text-surface-900 dark:text-surface-0 leading-normal">Your revenue has increased by <span class="text-primary font-bold">%25</span>.</span>
-                    </li>
-                    <li class="flex items-center py-2 border-b border-surface">
-                        <div class="w-12 h-12 flex items-center justify-center bg-purple-100 dark:bg-purple-400/10 rounded-full mr-4 shrink-0">
-                            <i class="pi pi-heart !text-xl text-purple-500"></i>
-                        </div>
-                        <span class="text-surface-900 dark:text-surface-0 leading-normal"><span class="text-primary font-bold">12</span> users have added your products to their wishlist.</span>
-                    </li>
-                </ul>
+                <div class="font-semibold text-xl mb-4">Linear</div>
+                <Chart type="line" :data="lineData" :options="lineOptions"></Chart>
             </div>
         </div>
     </div>
