@@ -21,6 +21,12 @@ app.use(PrimeVue, {
         }
     }
 });
+
+app.use(VueFire, {
+    firebaseApp,
+    modules: [VueFireFirestoreOptionsAPI()],
+  });
+
 app.use(ToastService);
 app.use(ConfirmationService);
 
