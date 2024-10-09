@@ -13,7 +13,7 @@ const model = ref([
         items: [
             { label: 'Table', icon: 'pi pi-fw pi-table', to: '/uikit/table' },
             { label: 'Soil Moisture', icon: 'pi pi-fw pi-chart-bar', to: '/uikit/charts' },
-            { label: 'Water Management', icon: 'pi pi-fw pi-chart-bar', to: '/uikit/charts' }
+            { label: 'Water Flow', icon: 'pi pi-fw pi-chart-bar', to: '/uikit/charts' }
         ]
     },
     {
