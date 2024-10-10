@@ -43,6 +43,11 @@ const model = ref([
                 ]
             },
             {
+                label: 'Inventory Management2',
+                icon: 'pi pi-fw pi-pencil',
+                to: '/pages/crud'
+            },
+            {
                 label: 'Inventory Management',
                 icon: 'pi pi-fw pi-pencil',
                 to: '/pages/crud'
