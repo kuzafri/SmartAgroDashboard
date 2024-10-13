@@ -80,6 +80,11 @@ const router = createRouter({
                     component: () => import('@/views/uikit/ChartDoc.vue')
                 },
                 {
+                    path: '/uikit/water',
+                    name: 'water',
+                    component: () => import('@/views/uikit/WaterDoc.vue')
+                },
+                {
                     path: '/uikit/misc',
                     name: 'misc',
                     component: () => import('@/views/uikit/MiscDoc.vue')
