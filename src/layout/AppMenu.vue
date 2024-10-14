@@ -37,16 +37,15 @@ const model = ref([
                 icon: 'pi pi-fw pi-pencil',
                 to: '/pages/crud'
             },
-            { label: 'Inventory List', 
-              icon: 'pi pi-fw pi-list', 
-              to: '/uikit/list' },
+            { label: 'Inventory List', icon: 'pi pi-fw pi-list', to: '/uikit/list' },
             {
                 label: 'Empty',
                 icon: 'pi pi-fw pi-circle-off',
                 to: '/pages/empty'
             }
         ]
-    }]);
+    }
+]);
 </script>
 
 <template>
