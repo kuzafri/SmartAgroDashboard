@@ -1,5 +1,6 @@
 import AppLayout from '@/layout/AppLayout.vue';
 import { createRouter, createWebHistory } from 'vue-router';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -11,7 +12,8 @@ const router = createRouter({
                 {
                     path: '/',
                     name: 'dashboard',
-                    component: () => import('@/views/Dashboard.vue')
+                    component: () => import('@/views/Dashboard.vue'),
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: '/uikit/formlayout',
@@ -108,6 +110,11 @@ const router = createRouter({
                     path: '/documentation',
                     name: 'documentation',
                     component: () => import('@/views/pages/Documentation.vue')
+                },
+                {
+                    path: '/auth/login',
+                    name: 'login',
+                    component: () => import('@/views/pages/auth/Login.vue')
                 }
             ]
         },
@@ -138,6 +145,21 @@ const router = createRouter({
             component: () => import('@/views/pages/auth/Error.vue')
         }
     ]
+});
+
+router.beforeEach((to, from, next) => {
+    const auth = getAuth();
+    const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+
+    onAuthStateChanged(auth, (user) => {
+        if (requiresAuth && !user) {
+            next('/auth/login');
+        } else if (to.path === '/auth/login' && user) {
+            next('/');
+        } else {
+            next();
+        }
+    });
 });
 
 export default router;
