@@ -1,29 +1,10 @@
 <script setup>
 import FloatingConfigurator from '@/components/FloatingConfigurator.vue';
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 
 const email = ref('');
 const password = ref('');
 const checked = ref(false);
-const router = useRouter();
-
-const handleLogin = () => {
-    const auth = getAuth();
-    signInWithEmailAndPassword(auth, email.value, password.value)
-        .then((userCredential) => {
-            // Signed in 
-            const user = userCredential.user;
-            router.push('/'); // Redirect to dashboard
-        })
-        .catch((error) => {
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            console.error(errorCode, errorMessage);
-            // Handle login error (show message to user, etc.)
-        });
-};
 </script>
 
 <template>
@@ -68,7 +49,7 @@ const handleLogin = () => {
                             </div>
                             <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary">Forgot password?</span>
                         </div>
-                        <Button label="Sign In" class="w-full" @click="handleLogin"></Button>
+                        <Button label="Sign In" class="w-full" as="router-link" to="/"></Button>
                     </div>
                 </div>
             </div>
