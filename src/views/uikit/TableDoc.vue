@@ -347,6 +347,37 @@ function calculateCustomerTotal(name) {
         </DataTable>
     </div>
 
+    <div class="card">
+        <div class="font-semibold text-xl mb-4">Grouping</div>
+        <DataTable :value="customers3" rowGroupMode="subheader" groupRowsBy="representative.name" sortMode="single" sortField="representative.name" :sortOrder="1" scrollable scrollHeight="400px" tableStyle="min-width: 50rem">
+            <template #groupheader="slotProps">
+                <div class="flex items-center gap-2">
+                    <img :alt="slotProps.data.representative.name" :src="`https://primefaces.org/cdn/primevue/images/avatar/${slotProps.data.representative.image}`" width="32" style="vertical-align: middle" />
+                    <span>{{ slotProps.data.representative.name }}</span>
+                </div>
+            </template>
+            <Column field="representative.name" header="Representative"></Column>
+            <Column field="name" header="Name" style="min-width: 200px"></Column>
+            <Column field="country" header="Country" style="min-width: 200px">
+                <template #body="slotProps">
+                    <div class="flex items-center gap-2">
+                        <img alt="flag" src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png" :class="`flag flag-${slotProps.data.country.code}`" style="width: 24px" />
+                        <span>{{ slotProps.data.country.name }}</span>
+                    </div>
+                </template>
+            </Column>
+            <Column field="company" header="Company" style="min-width: 200px"></Column>
+            <Column field="status" header="Status" style="min-width: 200px">
+                <template #body="slotProps">
+                    <Tag :value="slotProps.data.status" :severity="getSeverity(slotProps.data.status)" />
+                </template>
+            </Column>
+            <Column field="date" header="Date" style="min-width: 200px"></Column>
+            <template #groupfooter="slotProps">
+                <div class="flex justify-end font-bold w-full">Total Customers: {{ calculateCustomerTotal(slotProps.data.representative.name) }}</div>
+            </template>
+        </DataTable>
+    </div>
 </template>
 
 <style scoped lang="scss">
