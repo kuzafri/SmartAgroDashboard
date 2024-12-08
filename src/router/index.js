@@ -13,11 +13,11 @@ const router = createRouter({
                     name: 'dashboard',
                     component: () => import('@/views/Dashboard.vue')
                 },
-                {
-                    path: '/uikit/formlayout',
-                    name: 'formlayout',
-                    component: () => import('@/views/uikit/FormLayout.vue')
-                },
+                // {
+                //     path: '/uikit/formlayout',
+                //     name: 'formlayout',
+                //     component: () => import('@/views/uikit/FormLayout.vue')
+                // },
                 {
                     path: '/uikit/input',
                     name: 'input',
