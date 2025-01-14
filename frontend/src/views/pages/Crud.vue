@@ -27,7 +27,7 @@ const statuses = ref([
 ]);
 
 function formatCurrency(value) {
-    if (value) return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    if (value) return value.toLocaleString('en-US', { style: 'currency', currency: 'MYR' });
     return;
 }
 
@@ -150,7 +150,7 @@ function getStatusLabel(status) {
 
             <DataTable
                 ref="dt"
-                v-model:selection="selectedProducts"
+                v-model="selectedProducts"
                 :value="products"
                 dataKey="id"
                 :paginator="true"
@@ -177,7 +177,12 @@ function getStatusLabel(status) {
                 <Column field="name" header="Name" sortable style="min-width: 16rem"></Column>
                 <Column header="Image">
                     <template #body="slotProps">
-                        <img :src="`https://primefaces.org/cdn/primevue/images/product/${slotProps.data.image}`" :alt="slotProps.data.image" class="rounded" style="width: 64px" />
+                        <picture>
+                            <img :src="`/demo/images/product/${slotProps.data.image}`" 
+                                 :alt="slotProps.data.name"
+                                 class="rounded" 
+                                 style="width: 64px; height: 64px; object-fit: cover" />
+                        </picture>
                     </template>
                 </Column>
                 <Column field="price" header="Price" sortable style="min-width: 8rem">
@@ -200,9 +205,14 @@ function getStatusLabel(status) {
             </DataTable>
         </div>
 
-        <Dialog v-model:visible="productDialog" :style="{ width: '450px' }" header="Product Details" :modal="true">
+        <Dialog v-model="productDialog" :style="{ width: '450px' }" header="Product Details" :modal="true">
             <div class="flex flex-col gap-6">
-                <img v-if="product.image" :src="`https://primefaces.org/cdn/primevue/images/product/${product.image}`" :alt="product.image" class="block m-auto pb-4" />
+                <picture v-if="product.image">
+                    <img :src="`/demo/images/product/${product.image}`" 
+                         :alt="product.name"
+                         class="block m-auto pb-4" 
+                         style="max-width: 200px; height: auto;" />
+                </picture>
                 <div>
                     <label for="name" class="block font-bold mb-3">Name</label>
                     <InputText id="name" v-model.trim="product.name" required="true" autofocus :invalid="submitted && !product.name" fluid />
@@ -257,7 +267,7 @@ function getStatusLabel(status) {
             </template>
         </Dialog>
 
-        <Dialog v-model:visible="deleteProductDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
+        <Dialog v-model="deleteProductDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
             <div class="flex items-center gap-4">
                 <i class="pi pi-exclamation-triangle !text-3xl" />
                 <span v-if="product"
@@ -271,7 +281,7 @@ function getStatusLabel(status) {
             </template>
         </Dialog>
 
-        <Dialog v-model:visible="deleteProductsDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
+        <Dialog v-model="deleteProductsDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
             <div class="flex items-center gap-4">
                 <i class="pi pi-exclamation-triangle !text-3xl" />
                 <span v-if="product">Are you sure you want to delete the selected products?</span>
