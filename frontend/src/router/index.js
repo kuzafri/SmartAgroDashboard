@@ -39,11 +39,6 @@ const router = createRouter({
                     component: () => import('@/views/uikit/ListDoc.vue')
                 },
                 {
-                    path: '/uikit/tree',
-                    name: 'tree',
-                    component: () => import('@/views/uikit/TreeDoc.vue')
-                },
-                {
                     path: '/uikit/panel',
                     name: 'panel',
                     component: () => import('@/views/uikit/PanelsDoc.vue')

@@ -50,9 +50,9 @@ const model = ref([
 
 <template>
     <ul class="layout-menu">
-        <template v-for="(item, i) in model" :key="item">
-            <app-menu-item v-if="!item.separator" :item="item" :index="i"></app-menu-item>
-            <li v-if="item.separator" class="menu-separator"></li>
+        <template v-for="(item, i) in model">
+            <app-menu-item v-if="!item.separator" :key="item.label" :item="item" :index="i"></app-menu-item>
+            <li v-if="item.separator" class="menu-separator" :key="'separator-' + i"></li>
         </template>
     </ul>
 </template>

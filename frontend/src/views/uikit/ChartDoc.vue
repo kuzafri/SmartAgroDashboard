@@ -223,8 +223,10 @@ function setColorOptions() {
 
 async function fetchSensorData() {
     try {
-        const response = await axios.get('http://localhost:5000/data');
+        const response = await axios.get('http://localhost:5000/sensor_data');
         const sensorData = response.data;
+        
+        console.log('Received sensor data:', sensorData);
         
         if (!sensorData || sensorData.length === 0) {
             console.warn('No sensor data received');
@@ -233,13 +235,45 @@ async function fetchSensorData() {
         
         // Process data for charts - get last 10 readings
         const recentData = sensorData.slice(-10).reverse();
-        const timestamps = recentData.map(d => new Date(d['BSON UTC']).toLocaleTimeString());
+        console.log('Recent data:', recentData);
+        
+        // Fix timestamp parsing from MongoDB BSON format
+        const timestamps = recentData.map(d => {
+            try {
+                // Handle different MongoDB BSON date formats
+                let dateStr;
+                if (d['BSON UTC'].$date) {
+                    // Handle ISODate format
+                    if (typeof d['BSON UTC'].$date === 'string') {
+                        dateStr = d['BSON UTC'].$date;
+                    } else if (d['BSON UTC'].$date.$numberLong) {
+                        // Handle timestamp in milliseconds
+                        dateStr = parseInt(d['BSON UTC'].$date.$numberLong);
+                    }
+                } else {
+                    dateStr = d['BSON UTC'];
+                }
+                
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) {
+                    console.error('Invalid date:', d['BSON UTC']);
+                    return 'Invalid Date';
+                }
+                return date.toLocaleTimeString();
+            } catch (error) {
+                console.error('Error parsing date:', error, d['BSON UTC']);
+                return 'Invalid Date';
+            }
+        });
+
+        console.log('Raw BSON UTC values:', recentData.map(d => d['BSON UTC']));
+        console.log('Parsed timestamps:', timestamps);
+        
         const soilMoistureValues = recentData.map(d => d.soil_moisture);
-        const rainValues = recentData.map(d => d.rain_analog);
         
         const documentStyle = getComputedStyle(document.documentElement);
         
-        // Update line chart data
+        // Update line chart data for soil moisture
         lineData.value = {
             labels: timestamps,
             datasets: [
@@ -250,39 +284,37 @@ async function fetchSensorData() {
                     backgroundColor: documentStyle.getPropertyValue('--p-primary-500'),
                     borderColor: documentStyle.getPropertyValue('--p-primary-500'),
                     tension: 0.4
-                },
-                {
-                    label: 'Rain Level',
-                    data: rainValues,
-                    fill: false,
-                    backgroundColor: documentStyle.getPropertyValue('--p-primary-200'),
-                    borderColor: documentStyle.getPropertyValue('--p-primary-200'),
-                    tension: 0.4
                 }
             ]
         };
         
-        // Update pie chart for pump status distribution
-        const pumpData = sensorData.reduce((acc, curr) => {
-            if (curr.soil_pump) acc.soil++;
-            if (curr.rain_pump) acc.rain++;
-            return acc;
-        }, { soil: 0, rain: 0 });
+        // Update pie chart for soil moisture distribution
+        const moistureRanges = {
+            low: 0,
+            medium: 0,
+            high: 0
+        };
+        
+        recentData.forEach(reading => {
+            if (reading.soil_moisture < 1500) moistureRanges.low++;
+            else if (reading.soil_moisture < 2000) moistureRanges.medium++;
+            else moistureRanges.high++;
+        });
         
         pieData.value = {
-            labels: ['Soil Pump Active', 'Rain Pump Active', 'No Pump Active'],
+            labels: ['Low Moisture', 'Medium Moisture', 'High Moisture'],
             datasets: [
                 {
-                    data: [pumpData.soil, pumpData.rain, sensorData.length - (pumpData.soil + pumpData.rain)],
+                    data: [moistureRanges.low, moistureRanges.medium, moistureRanges.high],
                     backgroundColor: [
-                        documentStyle.getPropertyValue('--p-indigo-500'),
-                        documentStyle.getPropertyValue('--p-purple-500'),
-                        documentStyle.getPropertyValue('--p-teal-500')
+                        documentStyle.getPropertyValue('--p-red-500'),
+                        documentStyle.getPropertyValue('--p-yellow-500'),
+                        documentStyle.getPropertyValue('--p-green-500')
                     ],
                     hoverBackgroundColor: [
-                        documentStyle.getPropertyValue('--p-indigo-400'),
-                        documentStyle.getPropertyValue('--p-purple-400'),
-                        documentStyle.getPropertyValue('--p-teal-400')
+                        documentStyle.getPropertyValue('--p-red-400'),
+                        documentStyle.getPropertyValue('--p-yellow-400'),
+                        documentStyle.getPropertyValue('--p-green-400')
                     ]
                 }
             ]
@@ -311,7 +343,7 @@ watch(
 </script>
 
 <template>
-  <Fluid class="grid grid-cols-12 gap-8">
+    <div class="grid grid-cols-12 gap-8">
         <div v-if="isLoading" class="col-span-12 flex justify-center items-center">
             <div class="text-xl">Loading sensor data...</div>
         </div>
@@ -319,17 +351,26 @@ watch(
         <template v-else>
             <div class="col-span-12 xl:col-span-6">
                 <div class="card">
-                    <div class="font-semibold text-xl mb-4">Sensor Readings (Last 10 Readings)</div>
+                    <div class="font-semibold text-xl mb-4">Soil Moisture Trend</div>
                     <Chart type="line" :data="lineData" :options="lineOptions"></Chart>
                 </div>
             </div>
             
             <div class="col-span-12 xl:col-span-6">
                 <div class="card">
-                    <div class="font-semibold text-xl mb-4">Pump Activity Distribution</div>
+                    <div class="font-semibold text-xl mb-4">Moisture Level Distribution</div>
                     <Chart type="pie" :data="pieData" :options="pieOptions"></Chart>
                 </div>
             </div>
         </template>
-    </Fluid>
+    </div>
 </template>
+
+<style scoped>
+.card {
+    background: var(--surface-card);
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+</style>
