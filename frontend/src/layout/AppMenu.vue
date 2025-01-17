@@ -22,27 +22,14 @@ const model = ref([
         to: '/pages',
         items: [
             {
-                label: 'Auth',
-                icon: 'pi pi-fw pi-user',
-                items: [
-                    {
-                        label: 'Login',
-                        icon: 'pi pi-fw pi-sign-in',
-                        to: '/auth/login'
-                    }
-                ]
-            },
-            {
                 label: 'Inventory Management',
                 icon: 'pi pi-fw pi-pencil',
                 to: '/pages/crud'
             },
-            { label: 'Inventory List', icon: 'pi pi-fw pi-list', to: '/uikit/list' },
-            {
-                label: 'Empty',
-                icon: 'pi pi-fw pi-circle-off',
-                to: '/pages/empty'
-            }
+            { label: 'Inventory List', 
+              icon: 'pi pi-fw pi-list', 
+              to: '/uikit/list' 
+            },
         ]
     }
 ]);
