@@ -146,21 +146,21 @@ def prepare_data(use_synthetic=False, n_synthetic_samples=1000):
     
     return X, y
 
-def train_model(use_synthetic=True, n_synthetic_samples=20000):  # Increased samples
+def train_model(use_synthetic=True, n_synthetic_samples=20000):
     """Train the model with option to use synthetic data"""
     X, y = prepare_data(use_synthetic=use_synthetic, n_synthetic_samples=n_synthetic_samples)
     
     # Split the data with stratification
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    # Create and train an improved Random Forest model with better parameters
+    # Create and train a smaller Random Forest model
     model = RandomForestRegressor(
-        n_estimators=500,      # Increased from 200
-        max_depth=20,          # Increased from 15
-        min_samples_split=4,   # Decreased from 5 for more granular splits
-        min_samples_leaf=1,    # Decreased from 2 for more precise predictions
-        max_features='sqrt',   # Auto feature selection
-        bootstrap=True,        # Enable bootstrapping
+        n_estimators=100,      # Reduced from 500
+        max_depth=10,          # Reduced from 20
+        min_samples_split=5,   # Increased from 4
+        min_samples_leaf=2,    # Increased from 1
+        max_features='sqrt',   # Keep feature selection
+        bootstrap=True,
         n_jobs=-1,
         random_state=42
     )
