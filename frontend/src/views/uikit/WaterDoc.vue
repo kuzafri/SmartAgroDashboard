@@ -115,10 +115,52 @@ async function fetchSensorData() {
                     max: 4096,
                     ticks: {
                         color: textColorSecondary,
-                        stepSize: 500
+                        stepSize: 500,
+                        callback: function(value) {
+                            return value + ' units';
+                        }
                     },
                     grid: {
                         color: surfaceBorder
+                    },
+                    title: {
+                        display: true,
+                        text: 'Rain Value',
+                        color: textColor
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: textColorSecondary,
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    title: {
+                        display: true,
+                        text: 'Time',
+                        color: textColor
+                    },
+                    grid: {
+                        color: surfaceBorder
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor,
+                        font: {
+                            weight: 'bold'
+                        }
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `Rain Value: ${context.raw} units`;
+                        }
                     }
                 }
             }
@@ -166,10 +208,14 @@ async function fetchSensorData() {
                 {
                     label: 'Rain Value',
                     data: rainValues,
-                    fill: false,
-                    borderColor: documentStyle.getPropertyValue('--teal-500'),
+                    fill: true,
+                    borderColor: documentStyle.getPropertyValue('--blue-500'),
+                    backgroundColor: documentStyle.getPropertyValue('--blue-200') + '40',
                     tension: 0.4,
-                    backgroundColor: documentStyle.getPropertyValue('--teal-500')
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointBackgroundColor: documentStyle.getPropertyValue('--blue-500'),
+                    pointBorderColor: documentStyle.getPropertyValue('--blue-500')
                 }
             ]
         };

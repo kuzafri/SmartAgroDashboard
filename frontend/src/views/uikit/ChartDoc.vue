@@ -16,6 +16,8 @@ const polarOptions = ref(null);
 const barOptions = ref(null);
 const radarOptions = ref(null);
 const isLoading = ref(true);
+const predictionData = ref(null);
+const predictionOptions = ref(null);
 
 onMounted(() => {
     setColorOptions();
@@ -100,39 +102,51 @@ function setColorOptions() {
     };
 
     lineData.value = {
-        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+        labels: [],
         datasets: [
             {
-                label: 'First Dataset',
-                data: [65, 59, 80, 81, 56, 55, 40],
+                label: 'Soil Moisture',
+                data: [],
                 fill: false,
                 backgroundColor: documentStyle.getPropertyValue('--p-primary-500'),
                 borderColor: documentStyle.getPropertyValue('--p-primary-500'),
-                tension: 0.4
-            },
-            {
-                label: 'Second Dataset',
-                data: [28, 48, 40, 19, 86, 27, 90],
-                fill: false,
-                backgroundColor: documentStyle.getPropertyValue('--p-primary-200'),
-                borderColor: documentStyle.getPropertyValue('--p-primary-200'),
-                tension: 0.4
+                tension: 0.4,
+                pointStyle: 'circle',
+                pointRadius: 5,
+                pointHoverRadius: 8
             }
         ]
     };
 
     lineOptions.value = {
+        maintainAspectRatio: false,
+        aspectRatio: 0.8,
         plugins: {
             legend: {
                 labels: {
-                    fontColor: textColor
+                    color: textColor,
+                    font: {
+                        weight: 500
+                    }
+                }
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    label: function(context) {
+                        return `Soil Moisture: ${context.raw}`;
+                    }
                 }
             }
         },
         scales: {
             x: {
                 ticks: {
-                    color: textColorSecondary
+                    color: textColorSecondary,
+                    font: {
+                        weight: 500
+                    }
                 },
                 grid: {
                     color: surfaceBorder,
@@ -140,12 +154,26 @@ function setColorOptions() {
                 }
             },
             y: {
+                beginAtZero: true,
+                max: 4096,
                 ticks: {
-                    color: textColorSecondary
+                    color: textColorSecondary,
+                    font: {
+                        weight: 500
+                    },
+                    stepSize: 500
                 },
                 grid: {
                     color: surfaceBorder,
                     drawBorder: false
+                },
+                title: {
+                    display: true,
+                    text: 'Soil Moisture Level',
+                    color: textColor,
+                    font: {
+                        weight: 500
+                    }
                 }
             }
         }
@@ -233,21 +261,18 @@ async function fetchSensorData() {
             return;
         }
         
-        // Process data for charts - get last 10 readings
+        // Get last 10 readings and reverse them for chronological order
         const recentData = sensorData.slice(-10).reverse();
         console.log('Recent data:', recentData);
         
         // Fix timestamp parsing from MongoDB BSON format
         const timestamps = recentData.map(d => {
             try {
-                // Handle different MongoDB BSON date formats
                 let dateStr;
                 if (d['BSON UTC'].$date) {
-                    // Handle ISODate format
                     if (typeof d['BSON UTC'].$date === 'string') {
                         dateStr = d['BSON UTC'].$date;
                     } else if (d['BSON UTC'].$date.$numberLong) {
-                        // Handle timestamp in milliseconds
                         dateStr = parseInt(d['BSON UTC'].$date.$numberLong);
                     }
                 } else {
@@ -266,14 +291,11 @@ async function fetchSensorData() {
             }
         });
 
-        console.log('Raw BSON UTC values:', recentData.map(d => d['BSON UTC']));
-        console.log('Parsed timestamps:', timestamps);
-        
         const soilMoistureValues = recentData.map(d => d.soil_moisture);
         
         const documentStyle = getComputedStyle(document.documentElement);
         
-        // Update line chart data for soil moisture
+        // Update line chart data
         lineData.value = {
             labels: timestamps,
             datasets: [
@@ -283,7 +305,10 @@ async function fetchSensorData() {
                     fill: false,
                     backgroundColor: documentStyle.getPropertyValue('--p-primary-500'),
                     borderColor: documentStyle.getPropertyValue('--p-primary-500'),
-                    tension: 0.4
+                    tension: 0.4,
+                    pointStyle: 'circle',
+                    pointRadius: 5,
+                    pointHoverRadius: 8
                 }
             ]
         };
@@ -326,11 +351,117 @@ async function fetchSensorData() {
         isLoading.value = false;
     }
 }
+
+async function fetchPredictions() {
+    try {
+        const response = await axios.get('http://localhost:5000/moisture_predictions');
+        const predictions = response.data;
+        
+        if (!predictions || predictions.length === 0) {
+            console.warn('No predictions received');
+            return;
+        }
+        
+        const timestamps = predictions.map(p => {
+            const date = new Date(p.timestamp);
+            return date.toLocaleTimeString();
+        });
+        
+        const moistureValues = predictions.map(p => p.predicted_moisture);
+        
+        const documentStyle = getComputedStyle(document.documentElement);
+        
+        predictionData.value = {
+            labels: timestamps,
+            datasets: [
+                {
+                    label: 'Predicted Soil Moisture',
+                    data: moistureValues,
+                    fill: false,
+                    backgroundColor: documentStyle.getPropertyValue('--p-orange-500'),
+                    borderColor: documentStyle.getPropertyValue('--p-orange-500'),
+                    tension: 0.4,
+                    pointStyle: 'circle',
+                    pointRadius: 5,
+                    pointHoverRadius: 8
+                }
+            ]
+        };
+        
+        predictionOptions.value = {
+            maintainAspectRatio: false,
+            aspectRatio: 0.8,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor,
+                        font: {
+                            weight: 500
+                        }
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `Predicted Moisture: ${context.raw.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: textColorSecondary,
+                        font: {
+                            weight: 500
+                        }
+                    },
+                    grid: {
+                        color: surfaceBorder,
+                        drawBorder: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 4096,
+                    ticks: {
+                        color: textColorSecondary,
+                        font: {
+                            weight: 500
+                        },
+                        stepSize: 500
+                    },
+                    grid: {
+                        color: surfaceBorder,
+                        drawBorder: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Predicted Soil Moisture Level',
+                        color: textColor,
+                        font: {
+                            weight: 500
+                        }
+                    }
+                }
+            }
+        };
+    } catch (error) {
+        console.error('Error fetching predictions:', error);
+    }
+}
+
 onMounted(() => {
     setColorOptions();
     fetchSensorData();
+    fetchPredictions();
     // Refresh data every minute
-    setInterval(fetchSensorData, 60000);
+    setInterval(() => {
+        fetchSensorData();
+        fetchPredictions();
+    }, 60000);
 });
 
 watch(
@@ -360,6 +491,17 @@ watch(
                 <div class="card">
                     <div class="font-semibold text-xl mb-4">Moisture Level Distribution</div>
                     <Chart type="pie" :data="pieData" :options="pieOptions"></Chart>
+                </div>
+            </div>
+            
+            <div class="col-span-12">
+                <div class="card">
+                    <div class="font-semibold text-xl mb-4">24-Hour Soil Moisture Predictions</div>
+                    <div class="mb-4 text-sm text-gray-600">
+                        Predictions based on Random Forest model trained on historical data
+                    </div>
+                    <Chart v-if="predictionData" type="line" :data="predictionData" :options="predictionOptions"></Chart>
+                    <div v-else class="text-center py-4 text-gray-500">Loading predictions...</div>
                 </div>
             </div>
         </template>

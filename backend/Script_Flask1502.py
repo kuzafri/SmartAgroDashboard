@@ -6,6 +6,10 @@ import json
 from datetime import datetime
 from bson import CodecOptions, json_util
 from flask_cors import CORS
+import joblib
+import time
+import pandas as pd
+from soil_moisture_model import train_model, predict_future_moisture
 
 # MongoDB Atlas configuration
 MONGO_URI = "mongodb+srv://kuzafri:kuzafri313@conms.i2dnl.mongodb.net/?retryWrites=true&w=majority&appName=conms"
@@ -13,13 +17,23 @@ DB_NAME = "SmartAgro"
 COLLECTION_NAME = "sensor_data"
 
 # MQTT configuration
-MQTT_BROKER = "34.171.114.200"
+MQTT_BROKER = "34.42.195.199"
 MQTT_PORT = 1883
 MQTT_TOPIC = "SmartAgro"
+MQTT_CONTROL_TOPIC = "SmartAgro/control"  # New topic for control commands
 
 # Flask application
 app = Flask(__name__)
 CORS(app)
+
+# Load the trained model and scaler
+try:
+    model = joblib.load('water_pump_model.joblib')
+    scaler = joblib.load('feature_scaler.joblib')
+    print("Loaded ML model and scaler successfully!")
+except Exception as e:
+    print(f"Failed to load ML model or scaler: {e}")
+    exit(1)
 
 # Initialize MongoDB client with proper codec options
 try:
@@ -33,6 +47,46 @@ try:
 except Exception as e:
     print(f"Failed to connect to MongoDB Atlas: {e}")
     exit(1)
+
+# MQTT client for publishing control commands
+mqtt_publisher = mqtt.Client(client_id="python_publisher", clean_session=True)
+
+def predict_pump_status(soil_moisture, rain_value, is_raining):
+    try:
+        current_hour = datetime.now().hour
+        
+        # Create features DataFrame
+        features = pd.DataFrame({
+            'soil_moisture': [soil_moisture],
+            'rain_value': [rain_value],
+            'is_raining': [int(is_raining)],
+            'hour': [current_hour]
+        })
+        
+        # Scale numerical features
+        numerical_features = ['soil_moisture', 'rain_value']
+        features[numerical_features] = scaler.transform(features[numerical_features])
+        
+        # Make prediction
+        prediction = model.predict(features)[0]
+        probability = model.predict_proba(features)[0]
+        
+        return bool(prediction), probability
+    except Exception as e:
+        print(f"Error in prediction: {e}")
+        return None, None
+
+def publish_pump_control(should_pump_on):
+    try:
+        control_message = {
+            'command': 'pump',
+            'state': should_pump_on,
+            'timestamp': int(time.time())
+        }
+        mqtt_publisher.publish(MQTT_CONTROL_TOPIC, json.dumps(control_message))
+        print(f"Published pump control command: {control_message}")
+    except Exception as e:
+        print(f"Error publishing pump control: {e}")
 
 # MQTT callbacks
 def on_connect(client, userdata, flags, rc):
@@ -59,19 +113,33 @@ def on_message(client, userdata, msg):
         payload = json.loads(msg.payload.decode())
         print(f"Received payload: {payload}")
 
-        current_time = datetime.utcnow()
-        processed_data = {
-            'soil_moisture': int(payload.get('soil_moisture', 0)),
-            'rain_value': int(payload.get('rain_value', 0)),
-            'is_raining': bool(payload.get('is_raining', False)),
-            'soil_pump': payload.get('soil_pump', False),
-            'arduino_timestamp': int(payload.get('timestamp', 0)),
-            'BSON UTC': current_time
-        }
+        # Extract sensor data
+        soil_moisture = int(payload.get('soil_moisture', 0))
+        rain_value = int(payload.get('rain_value', 0))
+        is_raining = bool(payload.get('is_raining', False))
+        
+        # Get model prediction
+        should_pump, probability = predict_pump_status(soil_moisture, rain_value, is_raining)
+        
+        if should_pump is not None:
+            # Publish pump control command
+            publish_pump_control(should_pump)
+            
+            # Store data with prediction
+            current_time = datetime.utcnow()
+            processed_data = {
+                'soil_moisture': soil_moisture,
+                'rain_value': rain_value,
+                'is_raining': is_raining,
+                'soil_pump': should_pump,
+                'prediction_probability': probability.tolist(),
+                'arduino_timestamp': int(payload.get('timestamp', 0)),
+                'BSON UTC': current_time
+            }
 
-        print(f"Processed data: {processed_data}")
-        result = collection.insert_one(processed_data)
-        print(f"Data inserted with ID: {result.inserted_id}")
+            print(f"Processed data: {processed_data}")
+            result = collection.insert_one(processed_data)
+            print(f"Data inserted with ID: {result.inserted_id}")
     except Exception as e:
         print(f"Error processing message: {e}")
 
@@ -81,6 +149,13 @@ def start_mqtt_client():
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect
+
+    # Connect publisher
+    try:
+        mqtt_publisher.connect(MQTT_BROKER, MQTT_PORT, keepalive=60)
+        mqtt_publisher.loop_start()
+    except Exception as e:
+        print(f"Failed to connect publisher to MQTT broker: {e}")
 
     while True:
         try:
@@ -117,7 +192,23 @@ def add_sensor_data():
 def health_check():
     return jsonify({"message": "Flask API is running!"}), 200
 
-# Main function
+@app.route('/train_moisture_model', methods=['POST'])
+def train_moisture_model():
+    try:
+        model = train_model()
+        return jsonify({'message': 'Model trained successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/moisture_predictions', methods=['GET'])
+def get_moisture_predictions():
+    try:
+        hours = request.args.get('hours', default=24, type=int)
+        predictions = predict_future_moisture(hours)
+        return jsonify(predictions)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == "__main__":
     # Start MQTT client in a separate thread
     mqtt_thread = Thread(target=start_mqtt_client, daemon=True)
