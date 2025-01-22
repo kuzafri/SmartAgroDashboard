@@ -1,5 +1,5 @@
 {
-    "name": "sakai-vue",
+    "name": "SmartAgroDashboard",
     "version": "4.1.0",
     "scripts": {
         "dev": "vite",
